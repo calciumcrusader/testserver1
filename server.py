@@ -5,17 +5,41 @@ from flask import request
 
 app = Flask (__name__)
 
-def add_card_to_file(card):
+class CardDatabase(object):
 
-  f = open("card_database.txt", "a+")
-  f.write(card.name + " ," + card.description + "\n")
-  f.close()
+  def search(self,card):
+    pass
+  def delete(self,card):
+    pass
+  def add(self,card):
+      f = open("card_database.txt", "a+")
+      f.write(card.name + " ," + card.description + "\n")
+      f.close()
 
-def read_cards_from_file():
-  f = open("card_database.txt", "r")
-  cards = f.read()
-  f.close()
-  return cards
+  def show(self):
+      f = open("card_database.txt", "r")
+      cards = f.readlines()
+      first_card_string = cards[0].split(",")
+      first_card = Card(first_card_string[0],first_card_string[1])
+      card_list = []
+      for card_string in cards:
+          card_tuple = card_string.split(",")
+          card = Card(card_tuple[0],card_tuple[1])
+          card_list.append(card)
+      f.close()
+      return card_list
+
+card_db = CardDatabase()
+
+@app.route("/add_card_to_file")
+def add_card_to_file():
+  name = request.args.get("name")
+  description = request.args.get("description")
+  card = Card(name,description)
+  f = card_db.add(card)
+  return "Your new card " + name + " was added as well as the description " + description
+
+
 
 
 class Card(object):
@@ -31,12 +55,21 @@ class Card(object):
   def is_tapped(self):
     return self.tapped
 
+  def __str__(self):
+    return self.name + " " + self.description
+
+  def __repr__(self):
+    return self.__str__()
+
 @app.route("/")
 def hello():
-  return render_template('index.html', name='Koji')
+  return render_template('index.html',)
 
 
 @app.route("/add_card")
+def add_card_2():
+  return render_template('index.html')
+
 def add_card():
   name = request.args.get ("name")
   description = request.args.get ("description")
@@ -47,7 +80,7 @@ def add_card():
 
 @app.route("/get_cards")
 def get_cards():
-  return read_cards_from_file()
+  return str(card_db.show())
 
 if __name__ == "__main__":
   app.debug = True
